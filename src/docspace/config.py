@@ -9,6 +9,11 @@ keys = [
 	),
 
 	ConfigKey(
+		name='COURTLISTENER_TOKEN',
+		default=None,
+	),
+
+	ConfigKey(
 		name='DJANGO_SECRET_KEY',
 		default=get_random_secret_key(),
 	),

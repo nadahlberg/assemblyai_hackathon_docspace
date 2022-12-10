@@ -47,7 +47,10 @@ def docs_view(request):
 
     if 'delete' in request.POST:
         doc = Document.objects.get(id=request.POST['delete'])
-        doc.pdf.delete()
+        try:
+            doc.pdf.delete()
+        except:
+            pass
         doc.delete()
 
     if 'rename' in request.POST:

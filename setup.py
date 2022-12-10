@@ -26,6 +26,7 @@ setup(
 		'dj-database-url',
 		'whitenoise',
 		'plotly',
+		'requests',
 		'toolz',
 		'protobuf==3.19.6',
 		'pypdfium2',
