@@ -1,0 +1,31 @@
+.site-width {
+    max-width:1240px;
+}
+
+.header-font {
+    font-family: 'Figtree', sans-serif !important;
+}
+
+@media (min-width: 576px) {
+    .collapse.dont-collapse-sm {
+        display: block;
+        height: auto !important;
+        visibility: visible;
+    }
+}
+
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    margin: 0; 
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.nav-text {
+    font-size: 18px;
+}

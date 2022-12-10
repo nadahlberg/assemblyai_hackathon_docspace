@@ -1,7 +1,9 @@
+from pathlib import Path
 import click
 import os
 import docspace
 
+APP_DIR = Path(__file__).parent / 'app'
 
 @click.command()
 @click.option('--reset/--no-reset', default=False, help='Delete existing group keys in config')
@@ -14,7 +16,7 @@ def configure(reset):
 @click.option('--debug/--no-debug', default=None, help='Override debug config')
 def run(debug):
     """Run a local server of the docspace app"""
-    script_path = docspace.app.project.settings.BASE_DIR / 'manage.py'
+    script_path = APP_DIR / 'manage.py'
     cmd = f"python {script_path} runserver"
     if debug is not None:
         cmd = "DEBUG=" + str(int(debug)) + " " + cmd

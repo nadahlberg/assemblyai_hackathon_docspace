@@ -1,0 +1,16 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block content %}
+<div class="row mt-2">
+    <p class="h3">
+        {{doc.name}}
+    </p>
+    <div class="col-6">
+        {% for chunk in doc.chunks %}
+            <div class="card p-3 mb-3">
+                {{ chunk.text }}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

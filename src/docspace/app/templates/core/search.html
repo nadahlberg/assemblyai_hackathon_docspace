@@ -1,0 +1,57 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load extras %}
+{% block content %}
+<div class="row mt-2">
+    <p class="h3">
+        Search {% if focus_label and request.GET.search_annos == 'True' %}Annotations{% endif %}
+    </p>
+    <p style="font-size: 13px;">
+        {{num_results}} results, {{excluded_results}} excluded
+    </p>
+    <div class="col-8">
+        {% for result in results %}
+            <div class="card p-3 mb-3">
+                {% highlighted_text result request.GET.search as text %}
+                {{text|safe}}
+                {% if focus_label and not request.GET.search_annos == 'True' %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <button class='mt-3 btn btn-sm btn-outline-primary float-end' type="submit" name="add_anno" value="{{result.id}}">
+                            Add to {{focus_label.name}}
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+    <div class="col">
+        <form>
+            <p>
+                <input type="text" class="form-control" name="search" value="{{ request.GET.search }}">
+            </p>
+            <p>
+                <select class="form-select" name="focus_label">
+                    <option selected value="">Select Focus Label</option>
+                    {% for label in labels %}
+                        <option {% if request.GET.focus_label == label.id|stringformat:"i" %}selected{% endif %} value="{{label.id}}">{{label.name}}</option>
+                    {% endfor %}
+                </select>
+            </p>
+            {% if focus_label %}
+            <p>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="True" name="search_annos" {% if request.GET.search_annos == 'True' %}checked{% endif %}>
+                    <label class="form-check-label">
+                      Search Annotations
+                    </label>
+                </div>
+            </p>
+            {% endif %}
+            <p>
+                <input type="submit" class="btn btn-primary w-100" value="Search">
+            </p>
+        </form>
+    </div>
+</div>
+{% endblock %}

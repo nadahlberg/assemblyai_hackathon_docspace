@@ -1,6 +1,7 @@
 from docspace.config import config
 from docspace.cli import main as cli
-from docspace import app
+import docspace.utils as utils
+#from docspace import app
 
 
 

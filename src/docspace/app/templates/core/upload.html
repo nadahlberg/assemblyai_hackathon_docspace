@@ -1,0 +1,41 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block content %}
+<div class="row mt-2">
+    <div class="col-10 col-md-8 col-lg-6 mx-auto mt-5">
+        <form method='post' class="mt-4 mb-3 text-center" enctype="multipart/form-data">
+            {% csrf_token %}
+            <p class="h3 mb-3">
+                Upload your complaint
+            </p>
+            <input class="form-control mb-3" type="file" name="upload_file">
+            <button class="btn btn-lg btn-secondary px-4 text-light" type="submit" data-bs-toggle="modal" data-bs-target="#processing">Get Started</button>
+            {% if not request.user.is_authenticated %}
+                <p class="mt-5">
+                    <a href="{% url 'core:login' %}">Login</a> to save your uploaded documents.
+                </p>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="modal fade" id="processing" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center py-5">
+                    <p class="h4 mb-5">
+                        Please wait while we process your file
+                    </p>
+                    <div class="d-flex justify-content-center mb-5">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <p class="mb-0">
+                        This can take up to a minute for large documents.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

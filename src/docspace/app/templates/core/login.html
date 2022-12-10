@@ -1,0 +1,11 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block content %}
+<form method='post' class="col-10 col-sm-8 col-lg-3 mx-auto mt-5 py-3">
+    {% csrf_token %}
+    <input type="text" class="form-control mb-3 rounded-0" placeholder="Username" aria-label="Username" aria-describedby="username" name="username" required autofocus>
+    <input type="password" class="form-control mb-3 rounded-0" placeholder="Password" aria-label="Password" aria-describedby="password" name="password" required autofocus>
+    <button class="btn btn-primary submit w-100 rounded-0">Sign in</button>
+</form>
+
+{% endblock %}
