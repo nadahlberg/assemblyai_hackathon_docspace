@@ -16,6 +16,7 @@ def index_view(request):
 
 
 def upload_view(request):
+    print(request.session._get_or_create_session_key())
     if 'upload_file' in request.FILES:
         doc = dict(
             name=request.FILES['upload_file'].name,
@@ -71,6 +72,8 @@ def docs_view(request):
 
 def doc_view(request, doc_id):
     doc = Document.objects.get(id=doc_id)
+    print(doc.upload_session)
+    print(request.session._get_or_create_session_key())
     if (doc.upload_by is None or request.user != doc.upload_by) and request.session._get_or_create_session_key() != doc.upload_session:
         return HttpResponseForbidden()
     return render(request, 'core/doc.html', {
