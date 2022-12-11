@@ -27,7 +27,7 @@ setup(
 		'whitenoise',
 		'plotly',
 		'requests',
-		'toolz',
+		'faiss-cpu',
 		'protobuf==3.19.6',
 		'pypdfium2',
 		'boto3',

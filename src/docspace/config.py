@@ -14,6 +14,11 @@ keys = [
 	),
 
 	ConfigKey(
+		name='COHERE_API_KEY',
+		default=None,
+	),
+
+	ConfigKey(
 		name='DJANGO_SECRET_KEY',
 		default=get_random_secret_key(),
 	),

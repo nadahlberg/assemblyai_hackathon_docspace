@@ -45,15 +45,15 @@ if not 'is_complaint' in index.columns:
     index['is_complaint'] = [x['label'] == 'LABEL_1' for x in preds]
     index.to_csv(index_path, index=False)
 
-index = index[index['is_complaint']].head(1000)
+
+index = index[index['is_complaint']].sample(200)
 for row in tqdm(index.to_dict('records')):
-    filename = Path(row['filepath_local']).name
+    filename = row['caseName'].replace('/',' ') + '.pdf'
     doc_path = complaints_dir / filename
     if not doc_path.exists():
         doc_url = "https://storage.courtlistener.com/recap/" + row['filepath_local'].split('recap/')[-1]
         urllib.request.urlretrieve(doc_url, doc_path)
         time.sleep(0.2)
-    #break
 
 
 doc_names = [x.name for x in Document.objects.all()]
@@ -69,8 +69,5 @@ for path in tqdm(doc_paths):
         doc.save()
         file = File(open(path, 'rb'))
         doc.pdf.save(os.path.basename(file.name), file)
-        try:
-            doc.process()
-        except:
-            print('error')
+        doc.process()
 

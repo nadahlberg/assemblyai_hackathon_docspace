@@ -4,6 +4,7 @@ from pathlib import Path
 import pypdfium2 as pdfium
 from toolz import partition_all
 import pandas as pd
+import numpy as np
 from postgres_copy import CopyManager
 import uuid
 from tqdm import tqdm
@@ -11,7 +12,11 @@ from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.utils import timezone
 from django.db import models
+import threading
+import time
+import cohere 
 import docspace
+from .search_index import search_index
 from .utils import *
 
 
@@ -22,7 +27,53 @@ class Chunk(models.Model):
     text = models.TextField(blank=True, null=True)
     clean_text = models.TextField(blank=True, null=True)
 
+    summary = models.TextField(blank=True, null=True)
+    summary_array = models.JSONField(blank=True, null=True)
+
     objects = CopyManager()
+
+    def get_summary(self):
+        if self.summary is None:
+            prompt = self.text.replace('__', ' ') + '\n\n'
+            prompt += 'What claims is the plaintiff bringing against the defendant?'
+
+            co = cohere.Client(docspace.config['COHERE_API_KEY']) 
+            r = co.generate( 
+                model='command-xlarge-20221108', 
+                prompt=prompt,
+                max_tokens=300, 
+                temperature=0,
+            )
+            q1 = r.generations[0].text
+
+            prompt = prompt + '\n\n' + q1 + '\n\nDescribe these laws.'
+            r = co.generate( 
+                model='command-xlarge-20221108', 
+                prompt=prompt,
+                max_tokens=300, 
+                temperature=0,
+            )
+            q2 = r.generations[0].text
+
+            self.summary = q1 + ' ' + q2
+            self.save()
+        return self.summary
+    
+    def get_summary_array(self):
+        if self.summary_array is None:
+            co = cohere.Client(docspace.config['COHERE_API_KEY']) 
+            r = co.embed(texts=[self.summary])
+            self.summary_array = r.embeddings[0]
+            self.save()
+        return self.summary_array
+
+    def search(self, k=10):
+        query = np.array([self.summary_array]).astype(np.float32)
+        search_k = k + len(self.doc.chunks())
+        results = search_index.search(query, search_k)[0]
+        results = [(x['distance'], Chunk.objects.get(id=int(x['text']))) for x in results]
+        results = [x for x in results if x[1].doc != self.doc][:k]
+        return results
 
 
 def pdf_path(instance, filename):
@@ -59,7 +110,7 @@ class Document(models.Model):
         Chunk.objects.filter(doc=self).delete()
         pdf = self.load()
 
-        chunk_size = 64
+        chunk_size = 256
         chunks = [{'tokens': [], 'page': 0, 'chunk_index': 0}]
 
         for page_index, page in enumerate(pdf):
@@ -76,23 +127,49 @@ class Document(models.Model):
                         'chunk_index': len(chunks),
                     })
 
-        tokens = []
+        all_tokens = []
+        keep_next = 0
+        terms = ['CLAIM', 'COUNT', 'CAUSE', 'Claim ', 'Count ', 'Cause ']
+        consolidated_chunks = []
         for i, chunk in tqdm(list(enumerate(chunks))):
-            chunk['doc_id'] = str(self.id)
-            if i < len(chunks) - 1:
-                chunk['tokens'] += chunks[i + 1]['tokens']
-            chunk['text'] = ' '.join(chunk['tokens'])
-            chunk['clean_text'] = docspace.utils.clean_text(chunk['text'])
-            tokens += chunk['tokens']
-            del chunk['tokens']
+            all_tokens += chunk['tokens']
+            text = ' '.join(chunk['tokens'])
+            if any(term in text for term in terms):
+                keep_next = max([keep_next, 3])
+            if keep_next > 0:
+                consolidated_chunks.append(chunk)
+                keep_next -= 1
+            
 
-        chunks = pd.DataFrame(chunks)
-        Chunk.objects.from_csv(df_to_file(chunks))
-        
-        self.text = ' '.join(tokens)
+        chunks = pd.DataFrame(consolidated_chunks)
+        if len(chunks) > 0:
+            chunks['doc_id'] = str(self.id)
+            chunks['text'] = chunks['tokens'].apply(lambda x: ' '.join(x))
+            chunks['clean_text'] = chunks['text'].apply(docspace.utils.clean_text)
+            chunks = chunks.drop(columns=['tokens'])
+            Chunk.objects.from_csv(df_to_file(chunks))
+            
+        self.text = ' '.join(all_tokens)
         self.clean_text = docspace.utils.clean_text(self.text)
         self.last_processed = timezone.now()
         self.save()
+
+    def update_chunks(self, sleep=6):
+        chunks = Chunk.objects.filter(summary_array__isnull=True, doc=self)
+
+        def update_chunk(chunk):
+            try:
+                chunk.get_summary()
+                chunk.get_summary_array()
+            except Exception as e:
+                print('error', e)
+
+        if len(chunks) > 0:
+            for chunk in chunks:
+                t = threading.Thread(target=update_chunk, args=(chunk,))
+                t.start()
+                time.sleep(sleep)
+            t.join()
     
     def chunks(self):
         return Chunk.objects.filter(doc=self).order_by('chunk_index')
