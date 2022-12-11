@@ -12,7 +12,11 @@ from .utils import *
 
 def index_view(request):
     if 'random_example' in request.POST:
-        doc = Document.objects.filter(public=True).order_by('?').first()
+        chunks = Chunk.objects.filter(cluster__isnull=False).values()
+        chunks = pd.DataFrame(chunks)
+        docs = chunks.groupby('doc_id').count().reset_index()
+        docs = docs[docs['id'] > 5]
+        doc = Document.objects.filter(public=True, id__in=docs['doc_id'].tolist()).order_by('?').first()
         return redirect('core:doc', doc_id=doc.id)
     return render(request, 'core/index.html', {
     })

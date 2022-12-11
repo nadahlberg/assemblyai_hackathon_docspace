@@ -2,15 +2,35 @@
 {% load static %}
 {% block content %}
 <div class="row mt-2">
-    <div class="col-10 col-md-8 col-lg-6 mx-auto mt-5">
-        <form method='post' class="mt-4 mb-3 text-center">
+    <div class="col-10 col-md-8 col-lg-6 mx-auto mt-3 mb-5">
+        <form method='post' class="mt-4 mb-5 text-center">
             {% csrf_token %}
-            <p class="h3 mb-3" style="line-height: 40px;">
+            <p class="h3 mb-4" style="line-height: 40px;">
                 A Zero-Shot Ontology for Legal Complaints
             </p>
-            <button class="btn btn-md btn-secondary px-4 text-light me-3" type="submit" name="random_example">See Random Example</button>
-            <a class="btn btn-md btn-secondary px-4 text-light ms-3" href="{% url 'core:upload' %}">Upload Your Own Document</a>
+            <button class="btn btn-md btn-secondary px-4 text-light me-3 mb-3" type="submit" name="random_example">See Random Example</button>
+            <a class="btn btn-md btn-secondary px-4 text-light ms-3 mb-3" href="{% url 'core:upload' %}">Upload Your Own Document</a>
         </form>
+        <div class="px-4">
+            <p class="h5 mt-5 pt-5">
+                What happens when I upload a complaint to docspace?
+            </p>
+            <p>
+                Hello
+            </p>
+            <p class="h5 mt-5">
+                I want to try it out.  Where can I find complaints for free?
+            </p>
+            <p>
+                Hello
+            </p>
+            <p class="h5 mt-5">
+                Why is this useful?
+            </p>
+            <p>
+                Hello
+            </p>
+        </div>
     </div>
 
     <div class="modal fade" id="processing" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">

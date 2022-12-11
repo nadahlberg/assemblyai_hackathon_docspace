@@ -46,7 +46,7 @@ if not 'is_complaint' in index.columns:
     index.to_csv(index_path, index=False)
 
 
-index = index[index['is_complaint']].sample(200)
+index = index[index['is_complaint']].sample(10)
 for row in tqdm(index.to_dict('records')):
     filename = row['caseName'].replace('/',' ') + '.pdf'
     doc_path = complaints_dir / filename

@@ -19,6 +19,7 @@ import docspace
 from .search_index import search_index
 from .utils import *
 
+
 class Cluster(models.Model):
     cluster_id = models.IntegerField()
     description = models.TextField(blank=True, null=True,)
@@ -41,7 +42,7 @@ class Cluster(models.Model):
         return self.description
 
     def __str__(self):
-        return f'Topic {self.cluster_id}'
+        return f'Claim Type {self.cluster_id}'
 
 
 class Chunk(models.Model):
@@ -54,6 +55,7 @@ class Chunk(models.Model):
     summary = models.TextField(blank=True, null=True)
     summary_array = models.JSONField(blank=True, null=True)
     cluster = models.ForeignKey('Cluster', blank=True, null=True, on_delete=models.CASCADE)
+    cluster_distance = models.FloatField(blank=True, null=True)
     similar_docs = models.JSONField(blank=True, null=True)
 
     objects = CopyManager()
@@ -101,29 +103,20 @@ class Chunk(models.Model):
         results = [x for x in results if x[1].doc != self.doc][:k]
         return results
     
-    def search_docs(self, k=8):
-        results = self.search(k)
-        doc_ids = []
-        uniuqe_results = []
-        for result in results:
-            if result[1].doc.id not in doc_ids:
-                doc_ids.append(result[1].doc.id)
-                uniuqe_results.append(result)
-        return uniuqe_results
-
-    
     def get_cluster(self):
         if self.cluster is None:
             results = self.search(1)
             if len(results) > 0:
                 self.cluster = results[0][1].cluster
+                self.cluster_distance = results[0][0]
                 self.save()
         return self.cluster
     
     def get_similar_docs(self):
         if self.similar_docs is None:
-            results = self.search_docs()
-            self.similar_docs = [str(x[1].doc.id) for x in results]
+            cluster = self.get_cluster()
+            similar_docs = Chunk.objects.filter(cluster=cluster).exclude(doc=self.doc).order_by('cluster_distance').values_list('doc_id', flat=True).distinct()
+            self.similar_docs = [str(x) for x in similar_docs[:8]]
             self.save()
         similar_docs = [uuid.UUID(x) for x in self.similar_docs]
         similar_docs = Document.objects.filter(id__in=similar_docs)
@@ -209,13 +202,16 @@ class Document(models.Model):
         self.last_processed = timezone.now()
         self.save()
 
-    def update_chunks(self, sleep=6):
+    def update_chunks(self, sleep=6, skip_similarity_matching=False):
         chunks = Chunk.objects.filter(summary_array__isnull=True, doc=self)
 
         def update_chunk(chunk):
             try:
                 chunk.get_summary()
                 chunk.get_summary_array()
+                if not skip_similarity_matching:
+                    chunk.get_cluster()
+                    chunk.get_similar_docs()
             except Exception as e:
                 chunk.delete()
                 print('error', e)

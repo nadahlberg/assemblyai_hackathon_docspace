@@ -10,7 +10,7 @@ co = cohere.Client(docspace.config['COHERE_API_KEY'])
 docs = Document.objects.all()
 
 for doc in tqdm(docs):
-    doc.update_chunks()
+    doc.update_chunks(skip_similarity_matching=True)
     
 
 
