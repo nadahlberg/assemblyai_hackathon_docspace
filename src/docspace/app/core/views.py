@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseForbidden
 from django.core.paginator import Paginator
 import pandas as pd
+import numpy as np
 import threading
 from .models import *
 from .utils import *
@@ -12,12 +13,10 @@ from .utils import *
 
 def index_view(request):
     if 'random_example' in request.POST:
-        chunks = Chunk.objects.filter(cluster__isnull=False).values()
-        chunks = pd.DataFrame(chunks)
-        docs = chunks.groupby('doc_id').count().reset_index()
-        docs = docs[docs['id'] > 5]
-        doc = Document.objects.filter(public=True, id__in=docs['doc_id'].tolist()).order_by('?').first()
-        return redirect('core:doc', doc_id=doc.id)
+        doc_ids = Chunk.objects.filter(cluster__isnull=False, doc__public=True).sort_values('cluster_distance').values_list('doc_id', flat=True)
+        doc_ids = list(set(doc_ids[:100]))
+        np.random.shuffle(doc_ids)
+        return redirect('core:doc', doc_id=doc_ids[0])
     return render(request, 'core/index.html', {
     })
 
