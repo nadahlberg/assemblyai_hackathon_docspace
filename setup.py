@@ -9,6 +9,7 @@ setup(
 	packages=find_packages('src'),
 	install_requires=[
 		'configuration-maker',
+		'cohere',
 		'Django',
 		'django-storages',
 		'django-postgres-copy',

@@ -32,10 +32,12 @@
             </a>
             <div id="nav-menu" class="collapse dont-collapse-sm">
                 <div class="pb-0 mb-0 py-1 pe-1 d-flex flex-column flex-sm-row text-end justify-content-end">
-                    <a class='btn border-0 text-primary nav-text ms-lg-4' href="{% url 'core:index' %}">Home</a>
+                    {% if request.user.is_authenticated %}
+                        <a class='btn border-0 text-primary nav-text ms-lg-4' href="{% url 'core:upload' %}">Upload</a>
+                        <a class='btn border-0 text-primary nav-text ms-lg-4' href="{% url 'core:docs' %}">My Documents</a>
+                    {% endif %}
                     <a class='btn border-0 text-primary nav-text ms-lg-4' href="{% url 'core:index' %}">About</a>
                     {% if request.user.is_authenticated %}
-                        <a class='btn border-0 text-primary nav-text ms-lg-4' href="{% url 'core:docs' %}">My Documents</a>
                         <a class='btn border-0 text-primary nav-text ms-lg-4' href="{% url 'core:logout' %}">Logout</a>
                     {% else %}
                         <a class='btn border-0 text-primary nav-text ms-lg-4' href="{% url 'core:login' %}">Login</a>

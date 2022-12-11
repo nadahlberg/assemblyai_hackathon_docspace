@@ -11,9 +11,8 @@ from .utils import *
 
 
 def index_view(request):
-    if request.user.is_authenticated:
-        return redirect('core:upload')
-    return redirect('core:login')
+    return render(request, 'core/index.html', {
+    })
 
 
 @login_required
