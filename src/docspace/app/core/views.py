@@ -13,8 +13,8 @@ from .utils import *
 
 def index_view(request):
     if 'random_example' in request.POST:
-        doc_ids = Chunk.objects.filter(cluster__isnull=False, doc__public=True).sort_values('cluster_distance').values_list('doc_id', flat=True)
-        doc_ids = doc_ids[:300]
+        doc_ids = Chunk.objects.filter(cluster__isnull=False, doc__public=True).order_by('cluster_distance').values_list('doc_id', flat=True)
+        doc_ids = list(doc_ids)[:300]
         np.random.shuffle(doc_ids)
         return redirect('core:doc', doc_id=doc_ids[0])
     return render(request, 'core/index.html', {
