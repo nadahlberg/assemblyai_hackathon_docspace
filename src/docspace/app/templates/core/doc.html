@@ -2,10 +2,32 @@
 {% load static %}
 {% block content %}
 <div class="row mt-2">
-    <p class="h3 mb-4">
-        {{doc.name}}
-    </p>
-    <div class="col">
+    <div class="row pe-0">
+        <div class="col">
+            <p class="h3 mb-3">
+                {{doc.name}}
+            </p>
+        </div>
+        <div class="col-2 pe-0">
+            <form method="post">
+                {% csrf_token %}
+                <button class="btn btn-secondary float-end rounded-1" name="download" type="submit">
+                    Download PDF
+                </button>
+            </form>
+        </div>
+    </div>
+    {% with doc.progress as progress %}
+        {% if not progress.2 %}
+            <p class="h5 mb-2">
+                Document Processing ({{progress.0}} / {{progress.1}})
+            </p>
+            <p class="mb-0">
+                refresh page for updates
+            </p>
+        {% endif %}
+    {% endwith %}
+    <div class="col mt-4">
         {% for chunk in doc.chunks %}
             {% if chunk.summary_array %}
                 <div class="card p-3 mb-3">
@@ -24,9 +46,9 @@
                         </div>
                         <div class="col-4 text-right">
                             <strong>See related documents</strong>
-                            {% for dist, related in chunk.search_docs %}
+                            {% for related_doc in chunk.get_similar_docs %}
                                 <p class="mt-2">
-                                    <a href="{% url 'core:doc' doc_id=related.doc.id %}" style="text-decoration:none;">{{ related.doc.name }}</a>
+                                    <a href="{% url 'core:doc' doc_id=related_doc.id %}" style="text-decoration:none;">{{ related_doc.name }}</a>
                                 </p>
                             {% endfor %}
                         </div>

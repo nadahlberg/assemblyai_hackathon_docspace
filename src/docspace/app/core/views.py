@@ -11,6 +11,9 @@ from .utils import *
 
 
 def index_view(request):
+    if 'random_example' in request.POST:
+        doc = Document.objects.filter(public=True).order_by('?').first()
+        return redirect('core:doc', doc_id=doc.id)
     return render(request, 'core/index.html', {
     })
 
@@ -30,10 +33,6 @@ def upload_view(request):
         return redirect('core:doc', doc_id=doc.id)
     return render(request, 'core/upload.html', {
     })
-
-
-def about_view(request):
-    return redirect('core:index')
 
 
 @login_required
@@ -71,11 +70,17 @@ def docs_view(request):
     })
 
 
-@login_required
 def doc_view(request, doc_id):
     doc = Document.objects.get(id=doc_id)
-    if request.user != doc.upload_by:
+    if not doc.public and request.user != doc.upload_by:
         return HttpResponseForbidden()
+
+    if 'download' in request.POST:
+        name = doc.name
+        if not name.lower().endswith('.pdf'):
+            name += '.pdf'
+        return download_file(request, doc.pdf.file, name, content_type='application/pdf')
+
     return render(request, 'core/doc.html', {
         'doc': doc,
     })
@@ -91,7 +96,7 @@ def login_view(request):
             login(request, user)
             if 'next' in request.GET:
                 return redirect(request.GET['next'])
-            return redirect('core:index')
+            return redirect('core:docs')
     return render(request, 'core/login.html')
 
 

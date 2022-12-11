@@ -54,6 +54,7 @@ class Chunk(models.Model):
     summary = models.TextField(blank=True, null=True)
     summary_array = models.JSONField(blank=True, null=True)
     cluster = models.ForeignKey('Cluster', blank=True, null=True, on_delete=models.CASCADE)
+    similar_docs = models.JSONField(blank=True, null=True)
 
     objects = CopyManager()
 
@@ -118,6 +119,15 @@ class Chunk(models.Model):
                 self.cluster = results[0][1].cluster
                 self.save()
         return self.cluster
+    
+    def get_similar_docs(self):
+        if self.similar_docs is None:
+            results = self.search_docs()
+            self.similar_docs = [str(x[1].doc.id) for x in results]
+            self.save()
+        similar_docs = [uuid.UUID(x) for x in self.similar_docs]
+        similar_docs = Document.objects.filter(id__in=similar_docs)
+        return similar_docs
 
 
 def pdf_path(instance, filename):
@@ -134,6 +144,7 @@ class Document(models.Model):
     upload_by = models.ForeignKey('auth.User', on_delete=models.CASCADE, blank=True, null=True)
     upload_session = models.CharField(max_length=255, blank=True, null=True)
     last_processed = models.DateTimeField(blank=True, null=True)
+    public = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -206,6 +217,7 @@ class Document(models.Model):
                 chunk.get_summary()
                 chunk.get_summary_array()
             except Exception as e:
+                chunk.delete()
                 print('error', e)
 
         if len(chunks) > 0:
@@ -217,4 +229,9 @@ class Document(models.Model):
     
     def chunks(self):
         return Chunk.objects.filter(doc=self).order_by('chunk_index')
+    
+    def progress(self):
+        total = self.chunks().count()
+        complete = self.chunks().filter(summary_array__isnull=False).count()
+        return complete, total, complete == total
     

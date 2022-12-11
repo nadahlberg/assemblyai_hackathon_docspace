@@ -3,18 +3,13 @@
 {% block content %}
 <div class="row mt-2">
     <div class="col-10 col-md-8 col-lg-6 mx-auto mt-5">
-        <form method='post' class="mt-4 mb-3 text-center" enctype="multipart/form-data">
+        <form method='post' class="mt-4 mb-3 text-center">
             {% csrf_token %}
-            <p class="h3 mb-3">
+            <p class="h3 mb-3" style="line-height: 40px;">
                 A Zero-Shot Ontology for Legal Complaints
             </p>
-            <input class="form-control mb-3" type="file" name="upload_file">
-            <button class="btn btn-lg btn-secondary px-4 text-light" type="submit" data-bs-toggle="modal" data-bs-target="#processing">Get Started</button>
-            {% if not request.user.is_authenticated %}
-                <p class="mt-5">
-                    <a href="{% url 'core:login' %}">Login</a> to save your uploaded documents.
-                </p>
-            {% endif %}
+            <button class="btn btn-md btn-secondary px-4 text-light me-3" type="submit" name="random_example">See Random Example</button>
+            <a class="btn btn-md btn-secondary px-4 text-light ms-3" href="{% url 'core:upload' %}">Upload Your Own Document</a>
         </form>
     </div>
 

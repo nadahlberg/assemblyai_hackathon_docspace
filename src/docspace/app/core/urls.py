@@ -6,7 +6,6 @@ app_name = 'core'
 urlpatterns = [
     path('', index_view, name='index'),
     path('upload/', upload_view, name='upload'),
-    path('about/', about_view, name='about'),
     path('docs/', docs_view, name='docs'),
     path('doc/<str:doc_id>/', doc_view, name='doc'),
     path('login/', login_view, name='login'),
