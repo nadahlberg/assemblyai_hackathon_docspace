@@ -59,7 +59,7 @@ class Document(models.Model):
         Chunk.objects.filter(doc=self).delete()
         pdf = self.load()
 
-        chunk_size = 128
+        chunk_size = 64
         chunks = [{'tokens': [], 'page': 0, 'chunk_index': 0}]
 
         for page_index, page in enumerate(pdf):

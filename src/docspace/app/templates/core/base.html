@@ -35,6 +35,7 @@
                     <a class='btn border-0 text-primary nav-text ms-lg-4' href="{% url 'core:index' %}">Home</a>
                     <a class='btn border-0 text-primary nav-text ms-lg-4' href="{% url 'core:index' %}">About</a>
                     {% if request.user.is_authenticated %}
+                        <a class='btn border-0 text-primary nav-text ms-lg-4' href="{% url 'core:index' %}">API</a>
                         <a class='btn border-0 text-primary nav-text ms-lg-4' href="{% url 'core:docs' %}">My Documents</a>
                         <a class='btn border-0 text-primary nav-text ms-lg-4' href="{% url 'core:logout' %}">Logout</a>
                     {% else %}

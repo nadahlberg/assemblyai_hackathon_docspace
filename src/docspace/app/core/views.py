@@ -11,21 +11,18 @@ from .utils import *
 
 def index_view(request):
     if request.user.is_authenticated:
-        return redirect('core:docs')
-    return redirect('core:upload')
+        return redirect('core:upload')
+    return redirect('core:login')
 
 
+@login_required
 def upload_view(request):
-    print(request.session._get_or_create_session_key())
     if 'upload_file' in request.FILES:
         doc = dict(
             name=request.FILES['upload_file'].name,
             pdf=request.FILES['upload_file'],
         )
-        if request.user.is_authenticated:
-            doc['upload_by'] = request.user
-        else:
-            doc['upload_session'] = request.session._get_or_create_session_key()
+        doc['upload_by'] = request.user
         doc = Document(**doc)
         doc.save()
         doc.process()
@@ -33,17 +30,17 @@ def upload_view(request):
     return render(request, 'core/upload.html', {
     })
 
+
 def about_view(request):
     return redirect('core:index')
 
 
+@login_required
 def docs_view(request):
     if request.user.username == 'nathan':
         docs = Document.objects.all()
-    elif request.user.is_authenticated:
-        docs = Document.objects.filter(upload_by=request.user)
     else:
-        docs = Document.objects.filter(upload_session=request.session._get_or_create_session_key())
+        docs = Document.objects.filter(upload_by=request.user)
 
     if 'delete' in request.POST:
         doc = Document.objects.get(id=request.POST['delete'])
@@ -73,11 +70,10 @@ def docs_view(request):
     })
 
 
+@login_required
 def doc_view(request, doc_id):
     doc = Document.objects.get(id=doc_id)
-    print(doc.upload_session)
-    print(request.session._get_or_create_session_key())
-    if (doc.upload_by is None or request.user != doc.upload_by) and request.session._get_or_create_session_key() != doc.upload_session:
+    if request.user != doc.upload_by:
         return HttpResponseForbidden()
     return render(request, 'core/doc.html', {
         'doc': doc,
