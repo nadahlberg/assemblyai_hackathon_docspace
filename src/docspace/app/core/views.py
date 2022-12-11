@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseForbidden
 from django.core.paginator import Paginator
 import pandas as pd
+import threading
 from .models import *
 from .utils import *
 
@@ -26,6 +27,7 @@ def upload_view(request):
         doc = Document(**doc)
         doc.save()
         doc.process()
+        threading.Thread(target=doc.update_chunks).start()
         return redirect('core:doc', doc_id=doc.id)
     return render(request, 'core/upload.html', {
     })

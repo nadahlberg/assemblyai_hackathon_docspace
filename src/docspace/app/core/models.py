@@ -19,6 +19,30 @@ import docspace
 from .search_index import search_index
 from .utils import *
 
+class Cluster(models.Model):
+    cluster_id = models.IntegerField()
+    description = models.TextField(blank=True, null=True,)
+
+    def get_description(self):
+        if self.description is None:
+            prompt = Chunk.objects.filter(cluster=self).order_by('?')
+            prompt = '\n\n'.join([x.summary for x in prompt[:4]]) + '\n\n'
+            prompt += 'Provide a consise summary that consolidates the descriptions above.'
+
+            co = cohere.Client(docspace.config['COHERE_API_KEY']) 
+            r = co.generate( 
+                model='command-xlarge-20221108', 
+                prompt=prompt,
+                max_tokens=300, 
+                temperature=0,
+            )
+            self.description = r.generations[0].text
+            self.save()
+        return self.description
+
+    def __str__(self):
+        return f'Topic {self.cluster_id}'
+
 
 class Chunk(models.Model):
     doc = models.ForeignKey('Document', on_delete=models.CASCADE)
@@ -29,6 +53,7 @@ class Chunk(models.Model):
 
     summary = models.TextField(blank=True, null=True)
     summary_array = models.JSONField(blank=True, null=True)
+    cluster = models.ForeignKey('Cluster', blank=True, null=True, on_delete=models.CASCADE)
 
     objects = CopyManager()
 
@@ -74,6 +99,25 @@ class Chunk(models.Model):
         results = [(x['distance'], Chunk.objects.get(id=int(x['text']))) for x in results]
         results = [x for x in results if x[1].doc != self.doc][:k]
         return results
+    
+    def search_docs(self, k=8):
+        results = self.search(k)
+        doc_ids = []
+        uniuqe_results = []
+        for result in results:
+            if result[1].doc.id not in doc_ids:
+                doc_ids.append(result[1].doc.id)
+                uniuqe_results.append(result)
+        return uniuqe_results
+
+    
+    def get_cluster(self):
+        if self.cluster is None:
+            results = self.search(1)
+            if len(results) > 0:
+                self.cluster = results[0][1].cluster
+                self.save()
+        return self.cluster
 
 
 def pdf_path(instance, filename):
@@ -173,3 +217,4 @@ class Document(models.Model):
     
     def chunks(self):
         return Chunk.objects.filter(doc=self).order_by('chunk_index')
+    

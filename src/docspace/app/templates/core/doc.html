@@ -2,14 +2,37 @@
 {% load static %}
 {% block content %}
 <div class="row mt-2">
-    <p class="h3">
+    <p class="h3 mb-4">
         {{doc.name}}
     </p>
-    <div class="col-6">
+    <div class="col">
         {% for chunk in doc.chunks %}
-            <div class="card p-3 mb-3">
-                {{ chunk.text }}
-            </div>
+            {% if chunk.summary_array %}
+                <div class="card p-3 mb-3">
+                    <div class="row">
+                        <div class="col">
+                            <strong>{{ chunk.get_cluster }}</strong>
+                            <p>
+                                {{ chunk.cluster.description }}
+                            </p>
+                            <p class='mb-0' style="font-size: 12px;">
+                                <strong>Excerpt from page {{chunk.page}}</strong>
+                            </p>
+                            <p style="font-size: 12px;">
+                                {{ chunk.text }}
+                            </p>
+                        </div>
+                        <div class="col-4 text-right">
+                            <strong>See related documents</strong>
+                            {% for dist, related in chunk.search_docs %}
+                                <p class="mt-2">
+                                    <a href="{% url 'core:doc' doc_id=related.doc.id %}" style="text-decoration:none;">{{ related.doc.name }}</a>
+                                </p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         {% endfor %}
     </div>
 </div>
