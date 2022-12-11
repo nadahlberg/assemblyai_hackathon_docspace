@@ -26,19 +26,20 @@ class Cluster(models.Model):
 
     def get_description(self):
         if self.description is None:
-            prompt = Chunk.objects.filter(cluster=self).order_by('?')
-            prompt = '\n\n'.join([x.summary for x in prompt[:4]]) + '\n\n'
-            prompt += 'Provide a consise summary that consolidates the descriptions above.'
+            chunks = Chunk.objects.filter(cluster=self).order_by('cluster_distance')
+            if len(chunks) > 0:
+                prompt = '\n\n'.join([x.summary for x in chunks[:4]]) + '\n\n'
+                prompt += 'Provide a concise summary that consolidates the descriptions above.'
 
-            co = cohere.Client(docspace.config['COHERE_API_KEY']) 
-            r = co.generate( 
-                model='command-xlarge-20221108', 
-                prompt=prompt,
-                max_tokens=300, 
-                temperature=0,
-            )
-            self.description = r.generations[0].text
-            self.save()
+                co = cohere.Client(docspace.config['COHERE_API_KEY']) 
+                r = co.generate( 
+                    model='command-xlarge-20221108', 
+                    prompt=prompt,
+                    max_tokens=300, 
+                    temperature=0,
+                )
+                self.description = r.generations[0].text
+                self.save()
         return self.description
 
     def __str__(self):
@@ -154,7 +155,7 @@ class Document(models.Model):
             pdf = pdfium.PdfDocument(str(input_path))
             return pdf
 
-    def process(self):
+    def process(self, max_chunks=20):
         Chunk.objects.filter(doc=self).delete()
         pdf = self.load()
 
@@ -188,7 +189,7 @@ class Document(models.Model):
                 consolidated_chunks.append(chunk)
                 keep_next -= 1
             
-
+        consolidated_chunks = consolidated_chunks[:max_chunks]
         chunks = pd.DataFrame(consolidated_chunks)
         if len(chunks) > 0:
             chunks['doc_id'] = str(self.id)
@@ -202,7 +203,7 @@ class Document(models.Model):
         self.last_processed = timezone.now()
         self.save()
 
-    def update_chunks(self, sleep=6, skip_similarity_matching=False):
+    def update_chunks(self, sleep=3, skip_similarity_matching=False):
         chunks = Chunk.objects.filter(summary_array__isnull=True, doc=self)
 
         def update_chunk(chunk):
@@ -213,15 +214,14 @@ class Document(models.Model):
                     chunk.get_cluster()
                     chunk.get_similar_docs()
             except Exception as e:
-                chunk.delete()
                 print('error', e)
+                time.sleep(5)
 
         if len(chunks) > 0:
             for chunk in chunks:
                 t = threading.Thread(target=update_chunk, args=(chunk,))
                 t.start()
                 time.sleep(sleep)
-            t.join()
     
     def chunks(self):
         return Chunk.objects.filter(doc=self).order_by('chunk_index')

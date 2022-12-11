@@ -19,13 +19,15 @@ index.save('search_index')
 
 kmeans = faiss.Kmeans(encodings.shape[-1], n_clusters, niter=50, verbose=True, seed=42)
 kmeans.train(encodings)
-_, clusters = kmeans.index.search(encodings, 1)
+distances, clusters = kmeans.index.search(encodings, 1)
 clusters = [x[0] for x in clusters]
-for chunks_id, cluster in tqdm(list(zip(chunks_ids, clusters))):
+distances = [x[0] for x in distances]
+for chunks_id, cluster, distance in tqdm(list(zip(chunks_ids, clusters, distances))):
     chunk = Chunk.objects.get(id=int(chunks_id))
     chunk_clusters = Cluster.objects.filter(cluster_id=cluster)
     if not chunk_clusters.exists():
         chunk.cluster = Cluster.objects.create(cluster_id=cluster)
     else:
         chunk.cluster = chunk_clusters.first()
+    chunk.cluster_distance = distance
     chunk.save()
