@@ -5,7 +5,7 @@ from tqdm import tqdm
 import docspace
 from app import *
 
-n_clusters = 100
+n_clusters = 200
 
 Cluster.objects.all().update(description=None)
 Chunk.objects.all().update(cluster=None)

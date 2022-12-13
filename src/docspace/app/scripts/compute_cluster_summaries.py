@@ -8,7 +8,7 @@ clusters = Cluster.objects.filter(description__isnull=True)
 for cluster in tqdm(clusters):
     t = threading.Thread(target=cluster.get_description)
     t.start()
-    time.sleep(5)
+    time.sleep(3)
 
 
 
